@@ -3,26 +3,19 @@ const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
-let accessToken = null;
-
-async function getAccessToken() {
-  const response = await axios.post('https://auth.bouncie.dev/oauth/token', {
-    grant_type: 'client_credentials',
-    client_id: process.env.CLIENT_ID,
-    client_secret: process.env.CLIENT_SECRET
-  });
-  accessToken = response.data.access_token;
-}
 
 app.get('/api/truck-location', async (req, res) => {
-  try {
-    if (!accessToken) await getAccessToken();
+  if (process.env.USE_MOCK === 'true') {
+    // Mocked GPS location: Chicago downtown
+    return res.json({ latitude: 41.8781, longitude: -87.6298 });
+  }
 
+  try {
     const response = await axios.get(
-      `https://api.bouncie.dev/api/v1/vehicles/${process.env.VEHICLE_ID}/locations`,
+      `https://api.bouncie.com/api/v1/vehicles/${process.env.VEHICLE_ID}/locations`,
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`
+          Authorization: `Bearer ${process.env.BOUNCIE_API_KEY}`
         }
       }
     );
@@ -30,27 +23,43 @@ app.get('/api/truck-location', async (req, res) => {
     const latest = response.data[0];
     res.json({ latitude: latest.latitude, longitude: latest.longitude });
   } catch (error) {
-    console.error('Error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch location' });
+    console.error('Error:', error.response?.data || error.message);
+    res.status(500).json({
+      error: 'Failed to fetch location',
+      details: error.response?.data || error.message
+    });
   }
 });
 
-const PORT = process.env.PORT || 3000;
 app.get('/api/vehicle-list', async (req, res) => {
-  try {
-    if (!accessToken) await getAccessToken();
+  if (process.env.USE_MOCK === 'true') {
+    // Mocked vehicle list
+    return res.json([
+      {
+        id: 'mock123',
+        make: 'Mercedes',
+        model: 'Sprinter 3500',
+        year: 2019
+      }
+    ]);
+  }
 
-    const response = await axios.get('https://api.bouncie.dev/api/v1/vehicles', {
+  try {
+    const response = await axios.get('https://api.bouncie.com/api/v1/vehicles', {
       headers: {
-        Authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${process.env.BOUNCIE_API_KEY}`
       }
     });
 
     res.json(response.data);
   } catch (error) {
-    console.error('Error fetching vehicle list:', error.message);
-    res.status(500).json({ error: 'Failed to fetch vehicle list' });
+    console.error('Error fetching vehicle list:', error.response?.data || error.message);
+    res.status(500).json({
+      error: 'Failed to fetch vehicle list',
+      details: error.response?.data || error.message
+    });
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚚 Server running on port ${PORT}`));
