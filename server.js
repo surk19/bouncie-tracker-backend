@@ -5,8 +5,8 @@ require('dotenv').config();
 const app = express();
 
 app.get('/api/truck-location', async (req, res) => {
-  if (process.env.USE_MOCK === 'true') {
-    // Mocked GPS location: Chicago downtown
+if ((process.env.USE_MOCK || '').toLowerCase() === 'true') {    
+// Mocked GPS location: Chicago downtown
     return res.json({ latitude: 41.8781, longitude: -87.6298 });
   }
 
@@ -32,7 +32,7 @@ app.get('/api/truck-location', async (req, res) => {
 });
 
 app.get('/api/vehicle-list', async (req, res) => {
-  if (process.env.USE_MOCK === 'true') {
+  if ((process.env.USE_MOCK || '').toLowerCase() === 'true') {
     // Mocked vehicle list
     return res.json([
       {
