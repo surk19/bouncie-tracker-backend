@@ -4,15 +4,18 @@ require('dotenv').config();
 
 const app = express();
 
+// Log env var for debugging
+console.log('USE_MOCK:', process.env.USE_MOCK);
+console.log('VEHICLE_ID:', process.env.VEHICLE_ID);
+
 app.get('/api/truck-location', async (req, res) => {
-if ((process.env.USE_MOCK || '').toLowerCase() === 'true') {    
-// Mocked GPS location: Chicago downtown
-    return res.json({ latitude: 41.8781, longitude: -87.6298 });
+  if ((process.env.USE_MOCK || '').toLowerCase() === 'true') {
+    return res.json({ latitude: 41.8781, longitude: -87.6298 }); // Chicago
   }
 
   try {
     const response = await axios.get(
-      `https://api.bouncie.com/api/v1/vehicles/${process.env.VEHICLE_ID}/locations`,
+      `https://api.bouncie.dev/api/v1/vehicles/${process.env.VEHICLE_ID}/locations`,
       {
         headers: {
           Authorization: `Bearer ${process.env.BOUNCIE_API_KEY}`
@@ -23,9 +26,9 @@ if ((process.env.USE_MOCK || '').toLowerCase() === 'true') {
     const latest = response.data[0];
     res.json({ latitude: latest.latitude, longitude: latest.longitude });
   } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
+    console.error('Error fetching truck location:', error.response?.data || error.message);
     res.status(500).json({
-      error: 'Failed to fetch location',
+      error: 'Failed to fetch truck location',
       details: error.response?.data || error.message
     });
   }
@@ -33,7 +36,6 @@ if ((process.env.USE_MOCK || '').toLowerCase() === 'true') {
 
 app.get('/api/vehicle-list', async (req, res) => {
   if ((process.env.USE_MOCK || '').toLowerCase() === 'true') {
-    // Mocked vehicle list
     return res.json([
       {
         id: 'mock123',
@@ -45,7 +47,7 @@ app.get('/api/vehicle-list', async (req, res) => {
   }
 
   try {
-    const response = await axios.get('https://api.bouncie.com/api/v1/vehicles', {
+    const response = await axios.get('https://api.bouncie.dev/api/v1/vehicles', {
       headers: {
         Authorization: `Bearer ${process.env.BOUNCIE_API_KEY}`
       }
@@ -62,4 +64,4 @@ app.get('/api/vehicle-list', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚚 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
